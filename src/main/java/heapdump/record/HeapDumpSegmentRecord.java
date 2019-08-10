@@ -12,6 +12,9 @@ public class HeapDumpSegmentRecord implements Record {
   public static HeapDumpSegmentRecord readRecord(FileReader reader, int recordLength)
       throws IOException {
     long end = reader.getFilePointer() + recordLength;
+    if (recordLength < 0) {
+      end += (((long)1) << 32);
+    }
     List<SubRecord> records = new ArrayList<>();
     while (reader.getFilePointer() < end) {
       records.add(SubRecord.readRecord(reader));
