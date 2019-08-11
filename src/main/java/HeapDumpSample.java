@@ -6,6 +6,12 @@ import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public class HeapDumpSample {
 
@@ -42,7 +48,15 @@ public class HeapDumpSample {
     System.out.println();
     Instant end = Instant.now();
     System.out.println(Duration.between(start, end));
-    System.out.println(dump);
+    Collector<Map.Entry<String, Long>, ?, LinkedHashMap<String, Long>> topEntriesCollector =
+        Collectors.toMap(
+            e -> "\"" + e.getKey() + "\"", Map.Entry::getValue, Long::sum, LinkedHashMap::new);
+    System.out.println(
+        dump.allStrings().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+            .entrySet().stream()
+            .sorted(Comparator.comparingLong(e -> -e.getValue()))
+            .limit(10)
+            .collect(topEntriesCollector));
   }
 
   private static String formatTime(long millis) {

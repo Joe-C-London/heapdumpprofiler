@@ -6,6 +6,7 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class HeapDumpRepositoryImpl implements HeapDumpRepository {
 
@@ -285,5 +286,20 @@ public class HeapDumpRepositoryImpl implements HeapDumpRepository {
             .map(CompletableFuture::join)
             .collect(Collectors.toSet());
     instancesByObjectId = null;
+  }
+
+  public Stream<String> allStrings() {
+    return allObjects.stream()
+        .filter(ObjectInstance.class::isInstance)
+        .map(ObjectInstance.class::cast)
+        .filter(i -> i.getClassDefinition().getName().equals("java/lang/String"))
+        .map(i -> i.getFields().get("value"))
+        .map(v -> (PrimitiveArrayInstance<Character>) v.getValue())
+        .map(
+            i -> {
+              char[] str = new char[i.size()];
+              for (int j = 0; j < i.size(); j++) str[j] = i.get(j);
+              return new String(str);
+            });
   }
 }

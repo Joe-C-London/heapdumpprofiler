@@ -11,4 +11,12 @@ public class ObjectInstance extends JavaObject {
     this.classDefinition = classDefinition;
     this.fields = fields;
   }
+
+  public ClassDefinition getClassDefinition() {
+    return classDefinition;
+  }
+
+  public Map<String, FieldValue<?>> getFields() {
+    return fields;
+  }
 }

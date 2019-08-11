@@ -1,3 +1,8 @@
 package heapdump.repository;
 
-public interface HeapDumpRepository {}
+import java.util.stream.Stream;
+
+public interface HeapDumpRepository {
+
+  Stream<String> allStrings();
+}
