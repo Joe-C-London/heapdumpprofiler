@@ -1,32 +1,35 @@
 package heapdump;
 
 import heapdump.record.Record;
+import heapdump.repository.HeapDumpRepository;
+import heapdump.repository.HeapDumpRepositoryImpl;
 import java.io.File;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 public class BinaryDumpReader {
 
-  public static BinaryDump readHeapDump(File file) throws IOException {
+  public static HeapDumpRepository readHeapDump(File file) throws IOException {
+    return readHeapDump(file, (read, total) -> {});
+  }
+
+  public static HeapDumpRepository readHeapDump(File file, ProgressListener progressListener)
+      throws IOException {
     try (FileReader reader = new FileReader(file)) {
       String formatName = reader.readNullTerminatedString();
       int identifierSize = reader.readInt();
       reader.setIdentifierSize(identifierSize);
       long millisSinceEpoch = reader.readLong();
-      List<Record> records = new ArrayList<>();
-      BinaryDump ret = new BinaryDump(formatName, identifierSize, millisSinceEpoch, records);
-      while (reader.getFilePointer() < reader.length()) {
-        records.add(Record.readRecord(reader));
-        System.out.print(
-            "\r"
-                + new DecimalFormat("0.00")
-                    .format(100.0 * reader.getFilePointer() / reader.length())
-                + "% read");
+      HeapDumpRepositoryImpl ret = new HeapDumpRepositoryImpl();
+      while (reader.position() < reader.length()) {
+        Record.readRecord(reader, ret::addRecord, progressListener);
+        progressListener.onProgress(reader.position(), reader.length());
       }
-      System.out.println();
+      ret.doneReading();
       return ret;
     }
+  }
+
+  public interface ProgressListener {
+    void onProgress(long bytesRead, long totalBytes);
   }
 }

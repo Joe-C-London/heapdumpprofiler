@@ -29,4 +29,12 @@ public class LoadClassRecord implements Record {
     this.stackTraceSerialNumber = stackTraceSerialNumber;
     this.classNameStringId = classNameStringId;
   }
+
+  public long getClassObjectId() {
+    return classObjectId;
+  }
+
+  public long getClassNameStringId() {
+    return classNameStringId;
+  }
 }

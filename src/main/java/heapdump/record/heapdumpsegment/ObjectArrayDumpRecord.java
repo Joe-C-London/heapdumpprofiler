@@ -29,4 +29,16 @@ public class ObjectArrayDumpRecord implements SubRecord {
     this.arrayClassObjectId = arrayClassObjectId;
     this.elements = elements;
   }
+
+  public long getArrayObjectId() {
+    return arrayObjectId;
+  }
+
+  public long getArrayClassObjectId() {
+    return arrayClassObjectId;
+  }
+
+  public long[] getElements() {
+    return elements;
+  }
 }

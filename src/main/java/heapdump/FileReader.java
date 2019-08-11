@@ -127,7 +127,7 @@ public class FileReader implements AutoCloseable {
     }
   }
 
-  public long getFilePointer() throws IOException {
+  public long position() throws IOException {
     return (Integer.MAX_VALUE * (long) currentBuffer) + buffers[currentBuffer].position();
   }
 

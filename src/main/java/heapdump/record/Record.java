@@ -1,11 +1,18 @@
 package heapdump.record;
 
+import heapdump.BinaryDumpReader;
 import heapdump.FileReader;
+import heapdump.RecordListener;
 import java.io.IOException;
 
 public interface Record {
 
-  static Record readRecord(FileReader reader) throws IOException {
+  static void readRecord(
+      FileReader reader,
+      RecordListener recordListener,
+      BinaryDumpReader.ProgressListener progressListener)
+      throws IOException {
+    long start = reader.position();
     int tag = reader.read();
     int millisSinceHeader = reader.readInt();
     int recordLength = reader.readInt();
@@ -25,7 +32,9 @@ public interface Record {
         break;
       case 12:
       case 28:
-        record = HeapDumpSegmentRecord.readRecord(reader, recordLength);
+        record =
+            HeapDumpSegmentRecord.readRecord(
+                reader, recordLength, recordListener, progressListener);
         break;
       case 44:
         record = new HeapDumpEndRecord();
@@ -34,6 +43,6 @@ public interface Record {
         record = new UnknownRecord(tag);
         reader.skipBytes(recordLength);
     }
-    return record;
+    recordListener.onRecordRead(record);
   }
 }

@@ -88,6 +88,30 @@ public class ClassDumpRecord implements SubRecord {
     this.instanceFields = instanceFields;
   }
 
+  public long getClassObjectId() {
+    return classObjectId;
+  }
+
+  public long getSuperClassObjectId() {
+    return superClassObjectId;
+  }
+
+  public int getInstanceSizeBytes() {
+    return instanceSizeBytes;
+  }
+
+  public ConstantPoolEntry[] getConstantPool() {
+    return constantPool;
+  }
+
+  public StaticField[] getStaticFields() {
+    return staticFields;
+  }
+
+  public InstanceField[] getInstanceFields() {
+    return instanceFields;
+  }
+
   public static class ConstantPoolEntry {
     private final short constantPoolIndex;
     private final BasicType type;
@@ -97,6 +121,18 @@ public class ClassDumpRecord implements SubRecord {
       this.constantPoolIndex = constantPoolIndex;
       this.type = type;
       this.value = value;
+    }
+
+    public short getConstantPoolIndex() {
+      return constantPoolIndex;
+    }
+
+    public BasicType getType() {
+      return type;
+    }
+
+    public long getValue() {
+      return value;
     }
   }
 
@@ -110,6 +146,18 @@ public class ClassDumpRecord implements SubRecord {
       this.type = type;
       this.value = value;
     }
+
+    public long getFieldNameStringId() {
+      return fieldNameStringId;
+    }
+
+    public BasicType getType() {
+      return type;
+    }
+
+    public long getValue() {
+      return value;
+    }
   }
 
   public static class InstanceField {
@@ -119,6 +167,14 @@ public class ClassDumpRecord implements SubRecord {
     public InstanceField(long fieldNameStringId, BasicType type) {
       this.fieldNameStringId = fieldNameStringId;
       this.type = type;
+    }
+
+    public long getFieldNameStringId() {
+      return fieldNameStringId;
+    }
+
+    public BasicType getType() {
+      return type;
     }
   }
 }

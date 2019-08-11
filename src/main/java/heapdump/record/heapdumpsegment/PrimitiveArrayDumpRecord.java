@@ -25,6 +25,18 @@ public class PrimitiveArrayDumpRecord implements SubRecord {
   private final BasicType elementType;
   private final long[] elements;
 
+  public long getArrayObjectId() {
+    return arrayObjectId;
+  }
+
+  public BasicType getElementType() {
+    return elementType;
+  }
+
+  public long[] getElements() {
+    return elements;
+  }
+
   private PrimitiveArrayDumpRecord(
       long arrayObjectId, int stackTraceSerialNumber, BasicType elementType, long[] elements) {
     this.arrayObjectId = arrayObjectId;

@@ -1,11 +1,14 @@
 package heapdump.record.heapdumpsegment;
 
 import heapdump.FileReader;
+import heapdump.RecordListener;
+import heapdump.record.Record;
 import java.io.IOException;
 
-public interface SubRecord {
+public interface SubRecord extends Record {
 
-  static SubRecord readRecord(FileReader reader) throws IOException {
+  static void readRecord(FileReader reader, RecordListener recordListener) throws IOException {
+    long start = reader.position();
     int tag = reader.read();
     SubRecord record;
     switch (tag) {
@@ -48,6 +51,6 @@ public interface SubRecord {
       default:
         throw new IllegalArgumentException("Unknown tag " + tag);
     }
-    return record;
+    recordListener.onRecordRead(record);
   }
 }
