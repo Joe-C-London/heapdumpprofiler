@@ -167,7 +167,7 @@ public class HeapDumpRepositoryImpl implements HeapDumpRepository {
     CompletableFuture<JavaObject>[] values =
         Arrays.stream(objectArrayDumpRecord.getElements())
             .mapToObj(val -> createFieldValue(BasicType.OBJECT, val))
-            .map(FieldValue::getValue)
+            .map(FieldValue::getCompletableValue)
             .toArray(CompletableFuture[]::new);
     future.complete(new ObjectArrayInstance(type, values));
   }
@@ -181,7 +181,6 @@ public class HeapDumpRepositoryImpl implements HeapDumpRepository {
         Arrays.stream(primitiveArrayDumpRecord.getElements())
             .mapToObj(val -> createFieldValue(primitiveArrayDumpRecord.getElementType(), val))
             .map(FieldValue::getValue)
-            .map(CompletableFuture::join)
             .toArray(size -> (Object[]) Array.newInstance(fieldType, size));
     future.complete(new PrimitiveArrayInstance<>(fieldType, values));
   }
@@ -239,7 +238,17 @@ public class HeapDumpRepositoryImpl implements HeapDumpRepository {
   }
 
   private <T> FieldValue<T> createFieldValue(Class<T> clazz, T value) {
-    return createFieldValue(clazz, CompletableFuture.completedFuture(value));
+    return new FieldValue<T>() {
+      @Override
+      public Class<T> getType() {
+        return clazz;
+      }
+
+      @Override
+      public T getValue() {
+        return value;
+      }
+    };
   }
 
   private <T> FieldValue<T> createFieldValue(Class<T> clazz, CompletableFuture<T> future) {
@@ -250,7 +259,7 @@ public class HeapDumpRepositoryImpl implements HeapDumpRepository {
       }
 
       @Override
-      public CompletableFuture<T> getValue() {
+      public CompletableFuture<T> getCompletableValue() {
         return future;
       }
     };
