@@ -133,7 +133,7 @@ public class HeapDumpRepositoryImpl implements HeapDumpRepository {
       addRecord(instanceDumpRecord);
       return;
     }
-    Map<String, FieldValue<?>> fieldValues = new HashMap<>();
+    List<InstanceField> fieldValues = new LinkedList<>();
     InstanceDumpRecord.FieldReader fieldReader = instanceDumpRecord.getFieldReader();
     ClassDefinition currentClass = type;
     while (currentClass != null) {
@@ -143,15 +143,11 @@ public class HeapDumpRepositoryImpl implements HeapDumpRepository {
           .forEach(
               (fieldName, fieldType) -> {
                 FieldValue<?> value = createFieldValue(fieldType, fieldReader.readField(fieldType));
-                if (fieldValues.containsKey(fieldName)) {
-                  fieldValues.put(c.getName() + "/" + fieldName, value);
-                } else {
-                  fieldValues.put(fieldName, value);
-                }
+                fieldValues.add(new InstanceField(c, fieldName, value));
               });
       currentClass = currentClass.getSuperclass();
     }
-    future.complete(new ObjectInstance(type, fieldValues));
+    future.complete(new ObjectInstance(type, fieldValues.toArray(new InstanceField[0])));
   }
 
   private void processObjectArrayDumpRecord(ObjectArrayDumpRecord objectArrayDumpRecord) {
@@ -214,54 +210,144 @@ public class HeapDumpRepositoryImpl implements HeapDumpRepository {
   private FieldValue<?> createFieldValue(BasicType type, long value) {
     switch (type) {
       case OBJECT:
-        return createFieldValue(
-            JavaObject.class,
+        return createObjectFieldValue(
             instancesByObjectId.computeIfAbsent(value, x -> new CompletableFuture<>()));
       case BOOLEAN:
-        return createFieldValue(Boolean.class, value != 0);
+        return createBooleanFieldValue(value != 0);
       case CHAR:
-        return createFieldValue(Character.class, (char) value);
+        return createCharFieldValue((char) value);
       case FLOAT:
-        return createFieldValue(Float.class, Float.intBitsToFloat((int) value));
+        return createFloatFieldValue(Float.intBitsToFloat((int) value));
       case DOUBLE:
-        return createFieldValue(Double.class, Double.longBitsToDouble(value));
+        return createDoubleFieldValue(Double.longBitsToDouble(value));
       case BYTE:
-        return createFieldValue(Byte.class, (byte) value);
+        return createByteFieldValue((byte) value);
       case SHORT:
-        return createFieldValue(Short.class, (short) value);
+        return createShortFieldValue((short) value);
       case INT:
-        return createFieldValue(Integer.class, (int) value);
+        return createIntFieldValue((int) value);
       case LONG:
-        return createFieldValue(Long.class, value);
+        return createLongFieldValue(value);
       default:
         throw new IllegalArgumentException("Unknown type " + type);
     }
   }
 
-  private <T> FieldValue<T> createFieldValue(Class<T> clazz, T value) {
-    return new FieldValue<T>() {
+  private static FieldValue<JavaObject> createObjectFieldValue(
+      CompletableFuture<JavaObject> future) {
+    return new FieldValue<>() {
       @Override
-      public Class<T> getType() {
-        return clazz;
+      public Class<JavaObject> getType() {
+        return JavaObject.class;
       }
 
       @Override
-      public T getValue() {
+      public CompletableFuture<JavaObject> getCompletableValue() {
+        return future;
+      }
+    };
+  }
+
+  private static FieldValue<Boolean> createBooleanFieldValue(boolean value) {
+    return new FieldValue<>() {
+      @Override
+      public Class<Boolean> getType() {
+        return Boolean.class;
+      }
+
+      public Boolean getValue() {
         return value;
       }
     };
   }
 
-  private <T> FieldValue<T> createFieldValue(Class<T> clazz, CompletableFuture<T> future) {
-    return new FieldValue<T>() {
+  private static FieldValue<Character> createCharFieldValue(char value) {
+    return new FieldValue<>() {
       @Override
-      public Class<T> getType() {
-        return clazz;
+      public Class<Character> getType() {
+        return Character.class;
       }
 
+      public Character getValue() {
+        return value;
+      }
+    };
+  }
+
+  private static FieldValue<Float> createFloatFieldValue(float value) {
+    return new FieldValue<>() {
       @Override
-      public CompletableFuture<T> getCompletableValue() {
-        return future;
+      public Class<Float> getType() {
+        return Float.class;
+      }
+
+      public Float getValue() {
+        return value;
+      }
+    };
+  }
+
+  private static FieldValue<Double> createDoubleFieldValue(double value) {
+    return new FieldValue<>() {
+      @Override
+      public Class<Double> getType() {
+        return Double.class;
+      }
+
+      public Double getValue() {
+        return value;
+      }
+    };
+  }
+
+  private static FieldValue<Byte> createByteFieldValue(byte value) {
+    return new FieldValue<>() {
+      @Override
+      public Class<Byte> getType() {
+        return Byte.class;
+      }
+
+      public Byte getValue() {
+        return value;
+      }
+    };
+  }
+
+  private static FieldValue<Short> createShortFieldValue(short value) {
+    return new FieldValue<>() {
+      @Override
+      public Class<Short> getType() {
+        return Short.class;
+      }
+
+      public Short getValue() {
+        return value;
+      }
+    };
+  }
+
+  private static FieldValue<Integer> createIntFieldValue(int value) {
+    return new FieldValue<>() {
+      @Override
+      public Class<Integer> getType() {
+        return Integer.class;
+      }
+
+      public Integer getValue() {
+        return value;
+      }
+    };
+  }
+
+  private static FieldValue<Long> createLongFieldValue(long value) {
+    return new FieldValue<>() {
+      @Override
+      public Class<Long> getType() {
+        return Long.class;
+      }
+
+      public Long getValue() {
+        return value;
       }
     };
   }
@@ -293,7 +379,7 @@ public class HeapDumpRepositoryImpl implements HeapDumpRepository {
         .filter(ObjectInstance.class::isInstance)
         .map(ObjectInstance.class::cast)
         .filter(i -> i.getClassDefinition().getName().equals("java/lang/String"))
-        .map(i -> i.getFields().get("value"))
+        .map(i -> i.getField("value"))
         .map(v -> (PrimitiveArrayInstance<Character>) v.getValue())
         .map(
             i -> {
